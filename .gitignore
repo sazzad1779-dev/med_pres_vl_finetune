@@ -1,0 +1,6 @@
+All_Image/
+data/
+logs/
+.env
+processed_images/
+Processed_images/
