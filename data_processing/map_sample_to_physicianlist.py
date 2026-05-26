@@ -2,11 +2,19 @@ import pandas as pd
 import os
 import re
 
-def process_data():
+def extract_pr(path):
+    if not isinstance(path, str):
+        return None
+    # Extract the filename part starting with PR (case insensitive just in case, but usually uppercase)
+    match = re.search(r'(PR[A-Z0-9_]+)', os.path.basename(path), re.IGNORECASE)
+    if match:
+        return match.group(1)
+    return None
+def process_data(output_path):
     # Paths
     csv_path = "data/doctor_image_details (1).csv"
     excel_path = "data/R232C6_Dhanmondi_Data (2).xlsx"
-    output_path = "data/mapped_doctor_data.csv"
+    output_path = f"{output_path}/mapped_doctor_data.csv"
 
     print(f"Loading CSV: {csv_path}")
     df_csv = pd.read_csv(csv_path)
@@ -15,14 +23,7 @@ def process_data():
     # Extract PR from path
     # User says: "starting with pr is the pr"
     # Example: /content/drive/MyDrive/All_Image/PR232C6DHK23_P001.jpg -> PR232C6DHK23_P001
-    def extract_pr(path):
-        if not isinstance(path, str):
-            return None
-        # Extract the filename part starting with PR (case insensitive just in case, but usually uppercase)
-        match = re.search(r'(PR[A-Z0-9_]+)', os.path.basename(path), re.IGNORECASE)
-        if match:
-            return match.group(1)
-        return None
+    
 
     df_csv['extracted_pr'] = df_csv['IMAGE_NAME_WITH_PATH'].apply(extract_pr)
     print(f"Extracted PR sample: {df_csv['extracted_pr'].head().tolist()}")
@@ -61,10 +62,10 @@ def process_data():
         how='left',
         suffixes=('', '_phy')
     )
-
+    merged_df["image_path"] = merged_df['IMAGE_NAME_WITH_PATH'].str.split('/').str[-1]  # Keep only the filename for clarity
     # Clean up temporary columns and unwanted columns
     columns_to_drop = [
-        'extracted_pr', 'extracted_pr_upper', 'IMG_NM_upper',
+        'IMAGE_NAME_WITH_PATH','extracted_pr', 'extracted_pr_upper', 'IMG_NM_upper',
         'DOCTOR_DETAILS_COMBINED', 'MONTH', 'ROUND', 'YEAR', 'BOOKID', 'SHOPID', 
         'CDATE', 'PDATE', 'PRSTYPE', 'PSCSLNO', 'PHY_ID', 'PHY_NM', 'PHY_DEG',
         'VC2', 'NAME', 'GP', 'QTPRS', 'QTPURCH', 'CYCLE', 'FICODE', 'OPERATOR', 
@@ -80,7 +81,6 @@ def process_data():
     # Filter columns_to_drop to only those that exist in the dataframe
     existing_drops = [c for c in columns_to_drop if c in merged_df.columns]
     merged_df = merged_df.drop(columns=existing_drops)
-    
 
     print(f"Merge complete. Rows in CSV: {len(df_csv)}, Rows in Merged: {len(merged_df)}")
     print(f"Matched rows in Dhanmondi: {merged_df['PRSID'].notna().sum() if 'PRSID' in merged_df.columns else 'N/A'}")
@@ -89,6 +89,7 @@ def process_data():
     # Save to CSV
     merged_df.to_csv(output_path, index=False)
     print(f"Result saved to: {output_path}")
+
 
 if __name__ == "__main__":
     process_data()
