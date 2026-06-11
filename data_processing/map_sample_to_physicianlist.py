@@ -12,8 +12,12 @@ def extract_pr(path):
     return None
 def process_data(output_path):
     # Paths
-    csv_path = "data/doctor_image_details (1).csv"
-    excel_path = "data/R232C6_Dhanmondi_Data (2).xlsx"
+
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+        
+    csv_path = "data/doctor_image_details.csv"
+    excel_path = "data/R232C6_Dhanmondi_Data.xlsx"
     output_path = f"{output_path}/mapped_doctor_data.csv"
 
     print(f"Loading CSV: {csv_path}")
@@ -92,4 +96,5 @@ def process_data(output_path):
 
 
 if __name__ == "__main__":
-    process_data()
+    output_path = "data/processed"
+    process_data(output_path)
